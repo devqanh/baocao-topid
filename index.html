@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Báo cáo Lead — topID Sales</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e28;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #3b82f6;
+    --accent2: #06d6a0;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --font: 'Be Vietnam Pro', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Grid background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* Header */
+  .header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.25);
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .header h1 span { color: var(--accent); }
+  .header-meta {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .header-meta strong { color: var(--text); }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi:hover { border-color: var(--border2); }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi.blue::before { background: var(--accent); }
+  .kpi.green::before { background: var(--accent2); }
+  .kpi.amber::before { background: var(--warn); }
+  .kpi.red::before { background: var(--danger); }
+  .kpi-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .kpi-value { font-size: 36px; font-weight: 700; line-height: 1; color: #fff; font-family: var(--mono); }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .kpi-sub span { color: var(--accent2); }
+
+  /* Section */
+  .section { margin-bottom: 40px; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Chart cards */
+  .chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  @media (max-width: 860px) {
+    .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  canvas { display: block; }
+
+  /* Insight boxes */
+  .insight-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  @media (max-width: 768px) { .insight-grid { grid-template-columns: 1fr; } }
+  .insight {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .insight-icon { font-size: 22px; margin-bottom: 8px; }
+  .insight-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .insight-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .insight-body strong { color: var(--accent2); }
+
+  /* Ads table */
+  .ads-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ads-table th {
+    text-align: left; padding: 8px 12px;
+    color: var(--muted); font-weight: 500;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  .ads-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .ads-table tr:last-child td { border-bottom: none; }
+  .ads-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 4px; font-weight: 500;
+  }
+  .badge-green { background: rgba(6,214,160,0.15); color: #06d6a0; }
+  .badge-amber { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .badge-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+  .bar-inline {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .bar-track {
+    flex: 1; height: 6px; background: rgba(255,255,255,0.08);
+    border-radius: 3px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+
+  /* Footer */
+  .footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.5s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header fade-up">
+    <div class="header-tag">SALES INTELLIGENCE · topID</div>
+    <h1>Báo cáo <span>Lead</span> tổng hợp</h1>
+    <div class="header-meta">
+      <span>📅 Dữ liệu: <strong>T8/2025 — T5/2026</strong></span>
+      <span>📊 Tổng leads: <strong>2,146</strong></span>
+      <span>🕐 Cập nhật: <strong>20/05/2026</strong></span>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid fade-up delay-1">
+    <div class="kpi blue">
+      <div class="kpi-label">Tổng leads</div>
+      <div class="kpi-value">2,146</div>
+      <div class="kpi-sub">Từ T8/2025 đến nay</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Có số điện thoại</div>
+      <div class="kpi-value">1,173</div>
+      <div class="kpi-sub"><span>55%</span> tổng leads</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Leads tháng 4–5</div>
+      <div class="kpi-value">1,214</div>
+      <div class="kpi-sub"><span>62%</span> có SĐT · đang nóng</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Chưa tiếp nhận</div>
+      <div class="kpi-value">2,146</div>
+      <div class="kpi-sub">100% chờ phân công</div>
+    </div>
+  </div>
+
+  <!-- MONTHLY TREND -->
+  <div class="section fade-up delay-2">
+    <div class="section-title">Xu hướng theo tháng</div>
+    <div class="card">
+      <div class="card-title">Leads & tỷ lệ có SĐT theo từng tháng</div>
+      <div class="card-sub">Tổng volume leads và chất lượng qua các tháng</div>
+      <div style="position:relative; height: 300px;">
+        <canvas id="chartMonthly" role="img" aria-label="Biểu đồ leads và tỷ lệ có SĐT theo tháng từ T8/2025 đến T5/2026">
+          Dữ liệu leads theo tháng: T11/2025 270 leads, T3/2026 241 leads, T4/2026 755 leads, T5/2026 459 leads.
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAILY + HOUR -->
+  <div class="section fade-up delay-2">
+    <div class="section-title">Phân bổ theo thời gian</div>
+    <div class="chart-grid-3">
+      <div class="card">
+        <div class="card-title">Lead theo ngày — T3 đến T5/2026</div>
+        <div class="card-sub">Xu hướng ngày gần nhất, bùng nổ từ đầu tháng 4</div>
+        <div style="position:relative; height: 240px;">
+          <canvas id="chartDaily" role="img" aria-label="Lead theo ngày tháng 3-5/2026">Lead theo ngày.</canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Lead theo giờ</div>
+        <div class="card-sub">Giờ vàng tiếp cận khách</div>
+        <div style="position:relative; height: 240px;">
+          <canvas id="chartHour" role="img" aria-label="Lead theo giờ trong ngày">Lead theo giờ.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOW + INSIGHTS -->
+  <div class="section fade-up delay-3">
+    <div class="section-title">Phân tích hành vi & khuyến nghị</div>
+    <div class="chart-grid-2" style="margin-bottom: 20px;">
+      <div class="card">
+        <div class="card-title">Lead theo thứ trong tuần</div>
+        <div class="card-sub">Phân bổ đều — đội sales nên hoạt động 7 ngày</div>
+        <div style="position:relative; height: 220px;">
+          <canvas id="chartDow" role="img" aria-label="Lead theo thứ trong tuần">Lead theo thứ.</canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Chất lượng lead theo giờ (tỷ lệ có SĐT %)</div>
+        <div class="card-sub">Giờ đêm có chất lượng cao hơn ban ngày</div>
+        <div style="position:relative; height: 220px;">
+          <canvas id="chartHourQuality" role="img" aria-label="Tỷ lệ có SĐT theo giờ">Chất lượng lead theo giờ.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-grid">
+      <div class="insight">
+        <div class="insight-icon">⏰</div>
+        <div class="insight-title">Giờ vàng gọi điện</div>
+        <div class="insight-body">
+          Ưu tiên gọi vào <strong>13h–16h</strong> (volume cao nhất, đỉnh 15h với 178 leads)
+          và <strong>1h–3h sáng</strong> có tỷ lệ SĐT >75% — lead chất lượng cao.
+        </div>
+      </div>
+      <div class="insight">
+        <div class="insight-icon">📈</div>
+        <div class="insight-title">Bùng nổ từ tuần 7/4</div>
+        <div class="insight-body">
+          Volume tăng đột biến từ <strong>7–8/4/2026</strong> (từ ~10 lên 40+ leads/ngày).
+          Tháng 4/2026 đạt <strong>755 leads</strong> — gấp 3 lần tháng 3.
+        </div>
+      </div>
+      <div class="insight">
+        <div class="insight-icon">📱</div>
+        <div class="insight-title">Phân loại theo SĐT</div>
+        <div class="insight-body">
+          <strong>1,173 leads có SĐT</strong> → gọi điện trực tiếp.
+          <strong>973 leads chỉ có Facebook</strong> → tiếp cận qua Messenger, cần pipeline riêng.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADS TABLE -->
+  <div class="section fade-up delay-3">
+    <div class="section-title">Hiệu suất Ads ID</div>
+    <div class="card">
+      <div class="card-title">Phân tích chất lượng lead theo nguồn quảng cáo</div>
+      <div class="card-sub">Tổng tất cả thời gian — xếp theo volume</div>
+      <table class="ads-table" style="margin-top: 8px;">
+        <thead>
+          <tr>
+            <th>Ads ID</th>
+            <th style="text-align:right">Leads</th>
+            <th style="text-align:right">Có SĐT</th>
+            <th>Tỷ lệ SĐT</th>
+            <th>Đánh giá</th>
+          </tr>
+        </thead>
+        <tbody id="adsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MONTHLY BREAKDOWN TABLE -->
+  <div class="section fade-up delay-4">
+    <div class="section-title">Chi tiết theo tháng</div>
+    <div class="card">
+      <table class="ads-table">
+        <thead>
+          <tr>
+            <th>Tháng</th>
+            <th style="text-align:right">Tổng leads</th>
+            <th style="text-align:right">Có SĐT</th>
+            <th style="text-align:right">Không có SĐT</th>
+            <th>Tỷ lệ SĐT</th>
+          </tr>
+        </thead>
+        <tbody id="monthTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>topID Sales Team · Báo cáo tự động</span>
+    <span>Dữ liệu từ Google Form leads · Cập nhật 20/05/2026</span>
+  </div>
+
+</div>
+
+<script>
+const C = Chart;
+const dark = '#0d0f14';
+const grid = 'rgba(255,255,255,0.06)';
+const textC = '#6b7280';
+
+// ─── DATA ───────────────────────────────────────
+const monthly = [
+  { label: 'T8/25', total: 2, sdt: 1 },
+  { label: 'T9/25', total: 11, sdt: 9 },
+  { label: 'T10/25', total: 2, sdt: 1 },
+  { label: 'T11/25', total: 270, sdt: 111 },
+  { label: 'T12/25', total: 174, sdt: 88 },
+  { label: 'T1/26', total: 164, sdt: 63 },
+  { label: 'T2/26', total: 68, sdt: 49 },
+  { label: 'T3/26', total: 241, sdt: 100 },
+  { label: 'T4/26', total: 755, sdt: 477 },
+  { label: 'T5/26', total: 459, sdt: 274 },
+];
+
+const dailyRaw = [
+  ['01/3',14],['02/3',16],['03/3',8],['04/3',4],['05/3',12],['06/3',13],['07/3',13],
+  ['08/3',7],['09/3',12],['10/3',5],['11/3',7],['12/3',5],['13/3',5],['14/3',9],
+  ['15/3',11],['16/3',13],['17/3',8],['18/3',6],['19/3',4],['20/3',6],['21/3',4],
+  ['22/3',8],['23/3',8],['24/3',6],['25/3',8],['26/3',3],['27/3',4],['28/3',7],
+  ['29/3',6],['30/3',4],['31/3',5],
+  ['01/4',9],['02/4',9],['03/4',12],['04/4',5],['05/4',14],['06/4',8],['07/4',21],
+  ['08/4',24],['09/4',38],['10/4',41],['11/4',33],['12/4',37],['13/4',37],['14/4',36],
+  ['15/4',31],['16/4',39],['17/4',28],['18/4',27],['19/4',25],['20/4',37],['21/4',29],
+  ['22/4',23],['23/4',17],['24/4',34],['25/4',11],['26/4',23],['27/4',28],['28/4',26],
+  ['29/4',23],['30/4',30],
+  ['01/5',21],['02/5',22],['03/5',39],['04/5',26],['05/5',28],['06/5',18],['07/5',19],
+  ['08/5',27],['09/5',24],['10/5',21],['11/5',31],['12/5',24],['13/5',21],['14/5',30],
+  ['15/5',29],['16/5',18],['17/5',23],['18/5',20],['19/5',17],['20/5',1],
+];
+
+const hourly = [
+  [0,98,58],[1,115,76],[2,94,54],[3,127,84],[4,88,50],[5,106,64],[6,135,73],[7,143,68],
+  [8,111,60],[9,77,33],[10,65,23],[11,81,42],[12,87,38],[13,146,75],[14,136,71],
+  [15,178,110],[16,116,62],[17,60,37],[18,19,9],[19,11,5],[20,2,1],[21,19,11],[22,38,21],[23,94,48]
+];
+
+const dow = [
+  { label: 'T2', total: 345 }, { label: 'T3', total: 309 },
+  { label: 'T4', total: 279 }, { label: 'T5', total: 287 },
+  { label: 'T6', total: 327 }, { label: 'T7', total: 263 }, { label: 'CN', total: 336 }
+];
+
+const adsData = [
+  { id: '...990720', total: 974, sdt: 592, pct: 60.8, note: 'Ads chính' },
+  { id: 'Không rõ nguồn', total: 316, sdt: 257, pct: 81.3, note: 'Cần truy xuất' },
+  { id: '...080640', total: 252, sdt: 80, pct: 31.7, note: '' },
+  { id: '...580640', total: 248, sdt: 89, pct: 35.9, note: '' },
+  { id: '...120080', total: 173, sdt: 56, pct: 32.4, note: '' },
+  { id: '...720720', total: 129, sdt: 67, pct: 51.9, note: '' },
+  { id: '...780720', total: 16, sdt: 12, pct: 75.0, note: 'Chất lượng cao' },
+  { id: '...470720', total: 6, sdt: 5, pct: 83.3, note: 'Chất lượng cao' },
+];
+
+const baseScale = {
+  x: { ticks: { color: textC, font: { size: 11 }, maxRotation: 45 }, grid: { color: grid } },
+  y: { ticks: { color: textC, font: { size: 11 } }, grid: { color: grid } }
+};
+
+// ─── MONTHLY CHART ────────────────────────────────
+new C(document.getElementById('chartMonthly'), {
+  type: 'bar',
+  data: {
+    labels: monthly.map(d => d.label),
+    datasets: [
+      {
+        type: 'bar', label: 'Không có SĐT',
+        data: monthly.map(d => d.total - d.sdt),
+        backgroundColor: 'rgba(59,130,246,0.25)', borderRadius: 4, borderSkipped: false
+      },
+      {
+        type: 'bar', label: 'Có SĐT',
+        data: monthly.map(d => d.sdt),
+        backgroundColor: '#3b82f6', borderRadius: 4, borderSkipped: false
+      },
+      {
+        type: 'line', label: 'Tỷ lệ SĐT (%)',
+        data: monthly.map(d => Math.round(d.sdt / d.total * 100)),
+        borderColor: '#06d6a0', backgroundColor: 'transparent',
+        pointBackgroundColor: '#06d6a0', pointRadius: 4,
+        borderWidth: 2, tension: 0.4, yAxisID: 'y2'
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: textC, font: { size: 11 }, boxWidth: 12, padding: 16 } }
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: textC, font: { size: 11 } }, grid: { color: grid } },
+      y: { stacked: true, ticks: { color: textC, font: { size: 11 } }, grid: { color: grid } },
+      y2: { position: 'right', min: 0, max: 100, ticks: { color: '#06d6a0', font: { size: 11 }, callback: v => v + '%' }, grid: { display: false } }
+    }
+  }
+});
+
+// ─── DAILY CHART ─────────────────────────────────
+new C(document.getElementById('chartDaily'), {
+  type: 'line',
+  data: {
+    labels: dailyRaw.map(d => d[0]),
+    datasets: [{
+      data: dailyRaw.map(d => d[1]),
+      borderColor: '#3b82f6',
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,240);
+        g.addColorStop(0,'rgba(59,130,246,0.25)');
+        g.addColorStop(1,'rgba(59,130,246,0)');
+        return g;
+      },
+      fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: textC, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { color: grid } },
+      y: { ticks: { color: textC, font: { size: 10 } }, grid: { color: grid } }
+    }
+  }
+});
+
+// ─── HOURLY CHART ────────────────────────────────
+new C(document.getElementById('chartHour'), {
+  type: 'bar',
+  data: {
+    labels: hourly.map(d => d[0] + 'h'),
+    datasets: [{
+      data: hourly.map(d => d[1]),
+      backgroundColor: hourly.map(d => d[1] >= 130 ? '#3b82f6' : 'rgba(59,130,246,0.35)'),
+      borderRadius: 3, borderSkipped: false
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: textC, font: { size: 10 }, maxRotation: 45, autoSkip: false, maxTicksLimit: 24 }, grid: { color: grid } },
+      y: { ticks: { color: textC, font: { size: 10 } }, grid: { color: grid } }
+    }
+  }
+});
+
+// ─── DOW CHART ───────────────────────────────────
+new C(document.getElementById('chartDow'), {
+  type: 'radar',
+  data: {
+    labels: dow.map(d => d.label),
+    datasets: [{
+      data: dow.map(d => d.total),
+      borderColor: '#3b82f6',
+      backgroundColor: 'rgba(59,130,246,0.15)',
+      pointBackgroundColor: '#3b82f6',
+      borderWidth: 2, pointRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      r: {
+        ticks: { color: textC, font: { size: 10 }, backdropColor: 'transparent' },
+        grid: { color: grid },
+        pointLabels: { color: '#e8eaf0', font: { size: 12, weight: '500' } }
+      }
+    }
+  }
+});
+
+// ─── HOUR QUALITY CHART ──────────────────────────
+new C(document.getElementById('chartHourQuality'), {
+  type: 'line',
+  data: {
+    labels: hourly.map(d => d[0] + 'h'),
+    datasets: [{
+      data: hourly.map(d => Math.round(d[2] / d[1] * 100)),
+      borderColor: '#06d6a0',
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,220);
+        g.addColorStop(0,'rgba(6,214,160,0.25)');
+        g.addColorStop(1,'rgba(6,214,160,0)');
+        return g;
+      },
+      fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#06d6a0', borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: textC, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { color: grid } },
+      y: { min: 0, max: 100, ticks: { color: textC, font: { size: 10 }, callback: v => v + '%' }, grid: { color: grid } }
+    }
+  }
+});
+
+// ─── ADS TABLE ───────────────────────────────────
+const tbody = document.getElementById('adsTableBody');
+adsData.forEach(d => {
+  const badge = d.pct >= 70 ? 'badge-green' : d.pct >= 50 ? 'badge-amber' : 'badge-red';
+  const label = d.pct >= 70 ? 'Tốt' : d.pct >= 50 ? 'Trung bình' : 'Thấp';
+  const bar = Math.round(d.pct);
+  tbody.innerHTML += `
+    <tr>
+      <td style="color:#e8eaf0; font-family:var(--mono); font-size:12px;">
+        ${d.id}${d.note ? ` <span style="font-family:var(--font);color:var(--muted);font-size:11px;">(${d.note})</span>` : ''}
+      </td>
+      <td style="text-align:right; font-family:var(--mono);">${d.total.toLocaleString()}</td>
+      <td style="text-align:right; font-family:var(--mono); color:#06d6a0;">${d.sdt.toLocaleString()}</td>
+      <td>
+        <div class="bar-inline">
+          <div class="bar-track"><div class="bar-fill" style="width:${bar}%; background: ${d.pct >= 70 ? '#06d6a0' : d.pct >= 50 ? '#f59e0b' : '#ef4444'};"></div></div>
+          <span style="font-family:var(--mono); font-size:12px; min-width:38px;">${d.pct}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${badge}">${label}</span></td>
+    </tr>`;
+});
+
+// ─── MONTHLY TABLE ───────────────────────────────
+const monthlyFull = [
+  { label: 'T8/2025', total: 2, sdt: 1 },
+  { label: 'T9/2025', total: 11, sdt: 9 },
+  { label: 'T10/2025', total: 2, sdt: 1 },
+  { label: 'T11/2025', total: 270, sdt: 111 },
+  { label: 'T12/2025', total: 174, sdt: 88 },
+  { label: 'T1/2026', total: 164, sdt: 63 },
+  { label: 'T2/2026', total: 68, sdt: 49 },
+  { label: 'T3/2026', total: 241, sdt: 100 },
+  { label: 'T4/2026', total: 755, sdt: 477 },
+  { label: 'T5/2026', total: 459, sdt: 274 },
+];
+const mtbody = document.getElementById('monthTableBody');
+monthlyFull.slice().reverse().forEach(d => {
+  const pct = Math.round(d.sdt / d.total * 100);
+  const badge = pct >= 60 ? 'badge-green' : pct >= 45 ? 'badge-amber' : 'badge-red';
+  mtbody.innerHTML += `
+    <tr>
+      <td style="color:#e8eaf0; font-weight:500;">${d.label}</td>
+      <td style="text-align:right; font-family:var(--mono);">${d.total.toLocaleString()}</td>
+      <td style="text-align:right; font-family:var(--mono); color:#06d6a0;">${d.sdt.toLocaleString()}</td>
+      <td style="text-align:right; font-family:var(--mono); color:var(--muted);">${(d.total - d.sdt).toLocaleString()}</td>
+      <td><span class="badge ${badge}">${pct}%</span></td>
+    </tr>`;
+});
+</script>
+</body>
+</html>
